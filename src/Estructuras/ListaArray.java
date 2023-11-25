@@ -106,6 +106,12 @@ public class ListaArray<T> {
         } else {
             NodoArray<T> nodo = new NodoArray(element);
             int position = searchSpace();
+            if (position != -1) {
+                
+            } else {
+                
+            }
+            size++;
         }
     }
 
