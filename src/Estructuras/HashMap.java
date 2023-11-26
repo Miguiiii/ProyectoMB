@@ -64,7 +64,7 @@ public class HashMap<K, V> {
             bucket = new Lista();
             HashNode<K, V> nodo = new HashNode(key, value);
             bucket.insertBegin(nodo);
-            getBuckets().insertBegin(bucket);
+            getBuckets().insertAtIndex(bucket, index);
         } else {
             int i = 0;
             for (; i < bucket.getLength(); i++) {
@@ -104,17 +104,48 @@ public class HashMap<K, V> {
                         if (entry.getValues().getElmenetAtIndex(j) == value) {
                             eliminado = entry.getValues().getElmenetAtIndex(j);
                             entry.getValues().deleteElement(value);
+                            size--;
                             if (entry.getValues().getLength() == 0) {
                                 bucket.deleteAtIndex(i);
                             }
                             break;
                         }
                     }
-                    
+                    if (eliminado == null) {
+                        System.out.println("No existe ese valor asociado a la key dada");
+                        return eliminado;
+                    }
+                    if (bucket.getLength() == 0) {
+                        getBuckets().deleteAtIndex(index);
+                        break;
+                    }
                 }
+            }
+            if (i == bucket.getLength() && eliminado == null) {
+                System.out.println("No existe esa llave en el mapa");
+                return eliminado;
             }
         }
         return eliminado;
+    }
+    
+    public V deleteValue(V value) {
+        
+        for (int i = 0; i < getBuckets().getSize(); i++) {
+            Lista<HashNode<K, V>> bucket = getBuckets().getElmenetAtIndex(i);
+            for (int j = 0; j < bucket.getLength(); j++) {
+                HashNode<K, V> entry = bucket.getElmenetAtIndex(j);
+                Lista<V> valores = entry.getValues();
+                for (int k = 0; k < valores.getLength(); k++) {
+                    V current = valores.getElmenetAtIndex(k);
+                    if (current == value) {
+                        return deleteValueInKey(entry.getKey(), value);
+                    }
+                }
+            }
+        }
+        System.out.println("No existe ese valor en el mapa");
+        return null;
     }
     
 }

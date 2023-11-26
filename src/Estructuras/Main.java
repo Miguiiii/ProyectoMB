@@ -86,6 +86,25 @@ public class Main {
 //            System.out.println(a.getElement().getName());
 //        }
 
-
+//        HashMap<String, Documento> hash = new HashMap(5);
+//        Documento doc = new Documento("Tarea 1", "pdf", 4);
+//        hash.put("Miguel", doc);
+//        doc = new Documento("Tarea 2", "excel", 1);
+//        hash.put("Miguel", doc);
+//        doc = new Documento("Tarea 3", "word", 3);
+//        hash.put("Vincenzo", doc);
+//        hash.deleteValueInKey("Vincenzo", doc);
+//        System.out.println("Tamaño del hash: " + hash.getSize());
+//        
+//        for (int i = 0; i < hash.getBuckets().getSize(); i++) {
+//            Lista<HashNode<String, Documento>> bucket = hash.getBuckets().getElmenetAtIndex(i);
+//            for (int j = 0; j < bucket.getLength(); j++) {
+//                HashNode<String, Documento> entry = bucket.getElmenetAtIndex(j);
+//                System.out.println(entry.getKey()+":");
+//                for (int k = 0; k < entry.getValues().getLength(); k++) {
+//                    System.out.println("    " + entry.getValues().getElmenetAtIndex(k).getName());
+//                }
+//            }
+//        }
     }
 }
