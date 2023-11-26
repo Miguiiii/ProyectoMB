@@ -3,7 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Other/File.java to edit this template
  */
 package Nodos;
-
+import Estructuras.*;
 /**
  *
  * @author usuario
@@ -11,20 +11,24 @@ package Nodos;
 public class HashNode<K, V> {
     
     private K key;
-    private V value;
+    private Lista<V> values;
 
-    public HashNode(K key, V value) {
+    public HashNode(K key, V valor) {
         this.key = key;
-        this.value = value;
+        this.values = new Lista<V>();
+        addValue(valor);
     }
 
     public K getKey() {
         return key;
     }
 
-    public V getValue() {
-        return value;
+    public Lista<V> getValues() {
+        return values;
     }
     
+    public void addValue(V valor) {
+        getValues().insertBegin(valor);
+    }
     
 }

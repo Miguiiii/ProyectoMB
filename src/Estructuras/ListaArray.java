@@ -250,6 +250,16 @@ public class ListaArray<T> implements Iterable<T> {
         return null;
     }
     
+    public NodoArray deleteElement(T element) {
+        if (isEmpty()) {
+            System.out.println("The list is empty");
+        } else {
+            System.out.println("Element not found");
+        }
+        
+        return null;
+    }
+    
     public void print() {
         Integer pointer = getHead();
         while (pointer != null) {
