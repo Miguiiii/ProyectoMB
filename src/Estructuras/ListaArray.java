@@ -59,6 +59,19 @@ public class ListaArray<T> implements Iterable<T> {
         return getHead() == null;
     }
     
+    public T getElmenetAtIndex(int index) {
+        T element = null;
+        int cont = 0;
+        for (T i:this) {
+            if (cont == index) {
+                element = i;
+                break;
+            }
+            cont++;
+        }
+        return element;
+    }
+    
     private int searchSpace() {
         for (int i = 0; i < getArray().length; i++) {
             if(getArray()[i] == null) {
@@ -147,9 +160,11 @@ public class ListaArray<T> implements Iterable<T> {
                     pointer = getArray()[pointer].getNext();
                     cont++;
                 }
-                int temp = getArray()[pointer].getNext();
+                if (getArray()[pointer].getNext() != null) {
+                    int temp = getArray()[pointer].getNext();
+                    getArray()[position].setNext(temp);
+                }
                 getArray()[pointer].setNext(position);
-                getArray()[position].setNext(temp);
             } else {
                 NodoArray[] newArray = new NodoArray[getSize() + 1];
                 for (int i = 0; i < getSize(); i++) {
@@ -163,11 +178,13 @@ public class ListaArray<T> implements Iterable<T> {
                     pointer = getArray()[pointer].getNext();
                     cont++;
                 }
-                int temp = getArray()[pointer].getNext();
+                if (getArray()[pointer].getNext() != null) {
+                    int temp = getArray()[pointer].getNext();
+                    getArray()[newArray.length - 1].setNext(temp);
+                }
                 getArray()[pointer].setNext(newArray.length - 1);
-                getArray()[newArray.length - 1].setNext(temp);
-                size++;
             }
+            size++;
         } else {
             System.out.println("Invalid index");
         }
@@ -258,7 +275,7 @@ public class ListaArray<T> implements Iterable<T> {
 class ArrayIterator<T> implements Iterator<T> {
     
     NodoArray<T>[] array;
-    int pointer;
+    Integer pointer;
 
     public ArrayIterator(ListaArray array) {
         pointer = array.getHead();
@@ -267,7 +284,7 @@ class ArrayIterator<T> implements Iterator<T> {
     
     @Override
     public boolean hasNext() {
-        return array[pointer].getNext() != null;
+        return pointer != null;
     }
 
     @Override

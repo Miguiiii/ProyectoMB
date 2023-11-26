@@ -31,31 +31,33 @@ public class Main {
 //            System.out.println(i.getType());
 //        }
           
-          ListaArray<String> list = new ListaArray(5);
-          String var = "Hello";
-          for (int i = 0; i<5; i++) {
-              list.insertBegin(var);
-              var += "o";
-          }
-          System.out.println(list.getSize());
-          System.out.println("In Order");
-          list.print();
-          System.out.println("\nIn Memory");
-          list.printInMemory();
-          System.out.println("\nDelete");
-          list.deleteBegin();
-          System.out.println(list.getSize());
-          list.insertBegin("HI");
-          System.out.println(list.getSize());
-          System.out.println("In Order");
-          list.print();
-          System.out.println("\nIn Memory");
-          list.printInMemory();
-          
+//          ListaArray<String> list = new ListaArray(5);
+//          String var = "Hello";
+//          for (int i = 0; i<5; i++) {
+//              list.insertAtIndex(var, i);
+//              var += "o";
+//          }
+//          System.out.println(list.getSize());
+//          System.out.println("In Order");
+//          list.print();
+//          System.out.println("\nIn Memory");
+//          list.printInMemory();
+//          System.out.println("\nDelete");
+//          list.deleteAtIndex(4);
+//          System.out.println(list.getSize());
+//          list.insertAtIndex("HI", 3);
+//          System.out.println(list.getSize());
+//          System.out.println("In Order");
+//          list.print();
+//          System.out.println("\nIn Memory");
+//          list.printInMemory();
+//          System.out.println("\n\nTest");
 
-//            String ex = "Vincenzo";
-//            System.out.println(ex.hashCode());
-//            System.out.println(Math.abs(ex.hashCode()));
-//            System.out.println(Math.abs(ex.hashCode())%20);
+        
+//        String ex = "Vincenzo";
+//        System.out.println(ex.hashCode());
+//        System.out.println(Math.abs(ex.hashCode()));
+//        System.out.println(Math.abs(ex.hashCode())%20);
+
     }
 }

@@ -39,6 +39,19 @@ public class Lista<T> implements Iterable<T> {
         return getHead() == null;
     }
     
+    public T getElmenetAtIndex(int index) {
+        T element = null;
+        int cont = 0;
+        for (T i:this) {
+            if (cont == index) {
+                element = i;
+                break;
+            }
+            cont++;
+        }
+        return element;
+    }
+    
     public void insertBegin(T element) {
         Nodo nodo = new Nodo(element);
         if (isEmpty()) {
