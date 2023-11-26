@@ -39,8 +39,21 @@ public class Lista<T> implements Iterable<T> {
         return getHead() == null;
     }
     
+    public T getElmenetAtIndex(int index) {
+        T element = null;
+        int cont = 0;
+        for (T i:this) {
+            if (cont == index) {
+                element = i;
+                break;
+            }
+            cont++;
+        }
+        return element;
+    }
+    
     public void insertBegin(T element) {
-        Nodo nodo = new Nodo(element);
+        Nodo<T> nodo = new Nodo(element);
         if (isEmpty()) {
             setHead(nodo);
         } else {
@@ -54,7 +67,7 @@ public class Lista<T> implements Iterable<T> {
         if (isEmpty()) {
             insertBegin(element);
         } else {
-            Nodo nodo = new Nodo(element);
+            Nodo<T> nodo = new Nodo(element);
             Nodo pointer = getHead();
             while (pointer.getNext() != null) {
                 pointer = pointer.getNext();
@@ -73,7 +86,7 @@ public class Lista<T> implements Iterable<T> {
             if (index == getLength()) {
                 insertFinal(element);
             } else {
-                Nodo nodo = new Nodo(element);
+                Nodo<T> nodo = new Nodo(element);
                 Nodo pointer = getHead();
                 int cont = 0;
                 while (cont < index - 1) {
@@ -150,6 +163,12 @@ public class Lista<T> implements Iterable<T> {
         } else {
             while (pointer.getNext().getElement() != element) {
                 pointer = pointer.getNext();
+                if (pointer.getNext() == null) {
+                    break;
+                }
+            }
+            if (pointer.getNext() == null) {
+                return null;
             }
             Nodo temp = pointer.getNext();
             pointer.setNext(temp.getNext());

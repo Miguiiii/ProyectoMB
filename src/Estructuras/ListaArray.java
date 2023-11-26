@@ -4,11 +4,12 @@
  */
 package Estructuras;
 import Nodos.NodoArray;
+import java.util.Iterator;
 /**
  *
  * @author usuario
  */
-public class ListaArray<T> {
+public class ListaArray<T> implements Iterable<T> {
 
     private Integer head;
     private int maxSize;
@@ -56,6 +57,19 @@ public class ListaArray<T> {
     
     public boolean isEmpty() {
         return getHead() == null;
+    }
+    
+    public T getElmenetAtIndex(int index) {
+        T element = null;
+        int cont = 0;
+        for (T i:this) {
+            if (cont == index) {
+                element = i;
+                break;
+            }
+            cont++;
+        }
+        return element;
     }
     
     private int searchSpace() {
@@ -106,6 +120,27 @@ public class ListaArray<T> {
         } else {
             NodoArray<T> nodo = new NodoArray(element);
             int position = searchSpace();
+            if (position != -1) {
+                int pointer = getHead();
+                while (getArray()[pointer].getNext() != null) {
+                    pointer = getArray()[pointer].getNext();
+                }
+                getArray()[position] = nodo;
+                getArray()[pointer].setNext(position);
+            } else {
+                NodoArray[] newArray = new NodoArray[getSize() + 1];
+                for (int i = 0; i < getSize(); i++) {
+                    newArray[i] = getArray()[i];
+                }
+                newArray[newArray.length - 1] = nodo;
+                setArray(newArray);
+                int pointer = getHead();
+                while (getArray()[pointer].getNext() != null) {
+                    pointer = getArray()[pointer].getNext();
+                }
+                getArray()[pointer].setNext(newArray.length - 1);
+            }
+            size++;
         }
     }
 
@@ -125,9 +160,11 @@ public class ListaArray<T> {
                     pointer = getArray()[pointer].getNext();
                     cont++;
                 }
-                int temp = getArray()[pointer].getNext();
+                if (getArray()[pointer].getNext() != null) {
+                    int temp = getArray()[pointer].getNext();
+                    getArray()[position].setNext(temp);
+                }
                 getArray()[pointer].setNext(position);
-                getArray()[position].setNext(temp);
             } else {
                 NodoArray[] newArray = new NodoArray[getSize() + 1];
                 for (int i = 0; i < getSize(); i++) {
@@ -141,11 +178,13 @@ public class ListaArray<T> {
                     pointer = getArray()[pointer].getNext();
                     cont++;
                 }
-                int temp = getArray()[pointer].getNext();
+                if (getArray()[pointer].getNext() != null) {
+                    int temp = getArray()[pointer].getNext();
+                    getArray()[newArray.length - 1].setNext(temp);
+                }
                 getArray()[pointer].setNext(newArray.length - 1);
-                getArray()[newArray.length - 1].setNext(temp);
-                size++;
             }
+            size++;
         } else {
             System.out.println("Invalid index");
         }
@@ -168,10 +207,56 @@ public class ListaArray<T> {
     }
 
     public NodoArray deleteFinal() {
+        if(isEmpty()) {
+            System.out.println("The list is empty");
+        } else if (getSize() == 1) {
+            return deleteBegin();
+        } else {
+            NodoArray pointer = getArray()[getHead()];
+            while (getArray()[pointer.getNext()].getNext() != null) {
+                pointer = getArray()[pointer.getNext()];
+            }
+            NodoArray temp = getArray()[pointer.getNext()];
+            getArray()[pointer.getNext()] = null;
+            pointer.setNext(null);
+            size--;
+            return temp;
+        }
         return null;
     }
 
     public NodoArray deleteAtIndex(int index) {
+        if(isEmpty()) {
+            System.out.println("The list is empty");
+        } else if (index == 0) {
+            return deleteBegin();
+        } else if (index <= getArray().length) {
+            int cont = 0;
+            int pointer = getHead();
+            while (cont < index - 1) {
+                pointer = getArray()[pointer].getNext();
+                cont++;
+            }
+            NodoArray current = getArray()[pointer];
+            NodoArray temp = getArray()[current.getNext()];
+            getArray()[current.getNext()] = null;
+            current.setNext(temp.getNext());
+            temp.setNext(null);
+            size--;
+            return temp;
+        } else {
+            System.out.println("Invalid index");
+        }
+        return null;
+    }
+    
+    public NodoArray deleteElement(T element) {
+        if (isEmpty()) {
+            System.out.println("The list is empty");
+        } else {
+            System.out.println("Element not found");
+        }
+        
         return null;
     }
     
@@ -190,4 +275,38 @@ public class ListaArray<T> {
         
     }
     
+    @Override
+    public Iterator iterator() {
+        return new ArrayIterator(this);
+    }
+    
+}
+
+class ArrayIterator<T> implements Iterator<T> {
+    
+    NodoArray<T>[] array;
+    Integer pointer;
+
+    public ArrayIterator(ListaArray array) {
+        pointer = array.getHead();
+        this.array = array.getArray();
+    }
+    
+    @Override
+    public boolean hasNext() {
+        return pointer != null;
+    }
+
+    @Override
+    public T next() {
+        NodoArray<T> current = array[pointer];
+        pointer = current.getNext();
+        return current.getElement();
+    }
+
+    @Override
+    public void remove() {
+        throw new UnsupportedOperationException();
+    }
+
 }
