@@ -3,6 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Other/File.java to edit this template
  */
 package Estructuras;
+import InterfazGráfica.Panel;
 import ProyectObj.*;
 
 /**
@@ -57,5 +58,12 @@ public class Main {
 //            System.out.println(ex.hashCode());
 //            System.out.println(Math.abs(ex.hashCode()));
 //            System.out.println(Math.abs(ex.hashCode())%20);
+
+    java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                new Panel().setVisible(true);
+            }
+        });
     }
+    
 }
