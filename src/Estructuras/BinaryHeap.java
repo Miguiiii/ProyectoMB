@@ -52,15 +52,15 @@ public class BinaryHeap<T> {
         return false;
     }
     
-    private int parent(int index) {
+    public int parent(int index) {
         return (index - 1) / 2;
     }
     
-    private int leftChild(int index) {
+    public int leftChild(int index) {
         return 2 * index + 1;
     }
     
-    private int rightChild(int index) {
+    public int rightChild(int index) {
         return 2 * index + 2;
     }
     
