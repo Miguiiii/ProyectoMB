@@ -128,26 +128,39 @@ public class BinaryHeap<T> {
     }
     
     public BHNode extractMin() {
+        if (isEmpty()) {
+            System.out.println("El montículo está vacío");
+            return null;
+        }
         BHNode min = getHeap().getElmenetAtIndex(0);
         getHeap().deleteBegin();
         size--;
-        getHeap().insertBegin(getHeap().getElmenetAtIndex(size - 1));
-        getHeap().deleteFinal();
-        minHeapify(0);
+        if (size != 0) {
+            getHeap().insertBegin(getHeap().getElmenetAtIndex(size - 1));
+            getHeap().deleteFinal();
+            minHeapify(0);
+        }
         return min;
     }
     
     public BHNode extractElement(BHNode extract) {
+        if (isEmpty()) {
+            System.out.println("El monticulo esta vacio");
+            return null;
+        }
+        
+        
         Lista<T> colaElementos = new Lista();
         Lista<Integer> colaPrioridades = new Lista();
-        
+        BHNode eliminado = null;
+
         while (!getHeap().getElmenetAtIndex(0).equals(extract)) {
             colaElementos.insertFinal(getHeap().getElmenetAtIndex(0).getElement());
             colaPrioridades.insertFinal(getHeap().getElmenetAtIndex(0).getPrioridad());
             extractMin();
+            if (getSize() == 0) {break;}
         }
-        
-        BHNode eliminado = extractMin();
+        if (getSize() != 0) {eliminado = extractMin();}
         
         for (int i = 0; i < colaElementos.getLength(); i++) {
             T newElement = colaElementos.getElmenetAtIndex(0);
@@ -156,7 +169,11 @@ public class BinaryHeap<T> {
             colaElementos.deleteBegin();
             colaPrioridades.deleteBegin();
         }
-        
+        if (eliminado == null) {
+            System.out.println("Elemento no encontrado");
+            size++;
+        }
+        size--;
         return eliminado;
     }
     

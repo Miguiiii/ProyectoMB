@@ -39,6 +39,13 @@ public class Lista<T> implements Iterable<T> {
         return getHead() == null;
     }
     
+    public boolean hasElement(T element) {
+        for (T i:this) {
+            if (i == element) {return true;}
+        }
+        return false;
+    }
+    
     public T getElmenetAtIndex(int index) {
         T element = null;
         int cont = 0;
