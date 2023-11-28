@@ -6,16 +6,13 @@ package GUI;
 import Estructuras.*;
 import Nodos.*;
 import ProyectObj.*;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Scanner;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.graphstream.graph.*;
@@ -37,15 +34,16 @@ public class GUI extends javax.swing.JFrame {
     private Lista<Usuario> listaUsuarios;
     private Graph monticulo;
     private File currentFile;
-    private int userIndex;
+    private Usuario currentUser;
     /**
      * Creates new form GUI
      */
     public GUI() {
         timer = Clock.systemDefaultZone();
+        currentFile = null;
+        monticulo = new SingleGraph("Monticulo", false, true);
         colaImpresion = new BinaryHeap(20);
         listaUsuarios = new Lista();
-        monticulo = new SingleGraph("Cola de prioridad");
         initComponents();
         setExtendedState(javax.swing.JFrame.MAXIMIZED_BOTH);
         agregarUsuarioVisible(false,"");
@@ -98,7 +96,10 @@ public class GUI extends javax.swing.JFrame {
         cancelarAgregar = new java.awt.Button();
         nombreUsuario = new java.awt.TextField();
         addUserLabel = new java.awt.Label();
+        displaysPane = new javax.swing.JTabbedPane();
+        usersDisplay = new javax.swing.JPanel();
         graphDisplay = new javax.swing.JPanel();
+        colaDisplay = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -171,56 +172,56 @@ public class GUI extends javax.swing.JFrame {
         userSelection.setLayout(userSelectionLayout);
         userSelectionLayout.setHorizontalGroup(
             userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(userSelectionLayout.createSequentialGroup()
-                .addGap(112, 112, 112)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, userSelectionLayout.createSequentialGroup()
+                .addContainerGap(22, Short.MAX_VALUE)
                 .addGroup(userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, userSelectionLayout.createSequentialGroup()
-                        .addComponent(archivoUsuarios, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(25, 25, 25)
-                        .addComponent(guardarUsarios, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(79, 79, 79))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, userSelectionLayout.createSequentialGroup()
-                        .addComponent(signIn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(141, 141, 141))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, userSelectionLayout.createSequentialGroup()
-                        .addComponent(elegirUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 232, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(151, 151, 151))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, userSelectionLayout.createSequentialGroup()
-                        .addGroup(userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(userSelectionLayout.createSequentialGroup()
+                            .addComponent(confirmarAgregar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGap(71, 71, 71)
+                            .addComponent(cancelarAgregar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGap(62, 62, 62))
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addGroup(userSelectionLayout.createSequentialGroup()
-                                .addComponent(confirmarAgregar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGroup(userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(userSelectionLayout.createSequentialGroup()
-                                        .addGap(90, 90, 90)
-                                        .addComponent(eliminarUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(userSelectionLayout.createSequentialGroup()
-                                        .addGap(71, 71, 71)
-                                        .addComponent(cancelarAgregar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                            .addGroup(userSelectionLayout.createSequentialGroup()
+                                .addComponent(elegirUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 169, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(eliminarUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, userSelectionLayout.createSequentialGroup()
                                 .addGroup(userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(addUserLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(nombreUsuario, javax.swing.GroupLayout.DEFAULT_SIZE, 216, Short.MAX_VALUE))
+                                    .addComponent(nombreUsuario, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(addUserLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 169, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addGap(25, 25, 25)
                                 .addGroup(userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(prioridadMediaButton)
                                     .addComponent(prioridadBajaButton)
-                                    .addComponent(prioridadAltaButton))))
-                        .addGap(17, 17, 17))))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, userSelectionLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(agregarUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(143, 143, 143))
+                                    .addComponent(prioridadAltaButton)))))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, userSelectionLayout.createSequentialGroup()
+                        .addGap(109, 109, 109)
+                        .addComponent(signIn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(103, 103, 103)))
+                .addGap(22, 22, 22))
+            .addGroup(userSelectionLayout.createSequentialGroup()
+                .addGroup(userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(userSelectionLayout.createSequentialGroup()
+                        .addGap(73, 73, 73)
+                        .addComponent(archivoUsuarios, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(25, 25, 25)
+                        .addComponent(guardarUsarios, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(userSelectionLayout.createSequentialGroup()
+                        .addGap(144, 144, 144)
+                        .addComponent(agregarUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         userSelectionLayout.setVerticalGroup(
             userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(userSelectionLayout.createSequentialGroup()
-                .addGap(27, 27, 27)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, userSelectionLayout.createSequentialGroup()
+                .addGap(28, 28, 28)
                 .addGroup(userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(guardarUsarios, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(archivoUsuarios, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(27, 27, 27)
                 .addComponent(agregarUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(28, 28, 28)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(userSelectionLayout.createSequentialGroup()
                         .addComponent(prioridadAltaButton)
@@ -233,46 +234,77 @@ public class GUI extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(addUserLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(9, 9, 9)))
-                .addGap(40, 40, 40)
+                .addGap(24, 24, 24)
                 .addGroup(userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(cancelarAgregar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(confirmarAgregar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(43, 43, 43)
-                .addGroup(userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(elegirUsuario, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(userSelectionLayout.createSequentialGroup()
+                        .addComponent(elegirUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(44, 44, 44)
+                        .addComponent(signIn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(eliminarUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(43, 43, 43)
-                .addComponent(signIn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(39, 39, 39))
+                .addGap(78, 78, 78))
         );
+
+        javax.swing.GroupLayout usersDisplayLayout = new javax.swing.GroupLayout(usersDisplay);
+        usersDisplay.setLayout(usersDisplayLayout);
+        usersDisplayLayout.setHorizontalGroup(
+            usersDisplayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 447, Short.MAX_VALUE)
+        );
+        usersDisplayLayout.setVerticalGroup(
+            usersDisplayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 429, Short.MAX_VALUE)
+        );
+
+        displaysPane.addTab("Usuarios y Documentos", usersDisplay);
 
         javax.swing.GroupLayout graphDisplayLayout = new javax.swing.GroupLayout(graphDisplay);
         graphDisplay.setLayout(graphDisplayLayout);
         graphDisplayLayout.setHorizontalGroup(
             graphDisplayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 293, Short.MAX_VALUE)
+            .addGap(0, 447, Short.MAX_VALUE)
         );
         graphDisplayLayout.setVerticalGroup(
             graphDisplayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGap(0, 429, Short.MAX_VALUE)
         );
+
+        displaysPane.addTab("Montículo Binario", graphDisplay);
+
+        javax.swing.GroupLayout colaDisplayLayout = new javax.swing.GroupLayout(colaDisplay);
+        colaDisplay.setLayout(colaDisplayLayout);
+        colaDisplayLayout.setHorizontalGroup(
+            colaDisplayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 447, Short.MAX_VALUE)
+        );
+        colaDisplayLayout.setVerticalGroup(
+            colaDisplayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 429, Short.MAX_VALUE)
+        );
+
+        displaysPane.addTab("Cola Impresora", colaDisplay);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(graphDisplay, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(userSelection, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(displaysPane)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(userSelection, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(userSelection, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(graphDisplay, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(displaysPane)
                 .addContainerGap())
         );
+
+        displaysPane.getAccessibleContext().setAccessibleName("tab1");
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -294,7 +326,6 @@ public class GUI extends javax.swing.JFrame {
                 while (line != null) {
                     String[] array = line.split(",");
                     Usuario newUser = new Usuario(array[0].strip(), array[1].strip());
-                    System.out.println(array[0]+":"+array[1]);
                     listaUsuarios.insertFinal(newUser);
                     line = br.readLine();
                 }
@@ -313,22 +344,43 @@ public class GUI extends javax.swing.JFrame {
 
     private void signInActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_signInActionPerformed
         // TODO add your handling code here:
-        if (tiposPrioridad.getSelection() != null) {
-            System.out.println(tiposPrioridad.getSelection().getActionCommand());
+        if (elegirUsuario.getItemCount() == 0) {
+            addUserLabel.setText("Eliga un usuario válido");
+            return;
         }
+        currentUser = listaUsuarios.getElmenetAtIndex(elegirUsuario.getSelectedIndex());
         userSelection.setVisible(false);
+        graficarCola();
     }//GEN-LAST:event_signInActionPerformed
 
     private void guardarUsariosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_guardarUsariosActionPerformed
+        
+        
         BufferedWriter writer = null;
         try {
             // TODO add your handling code here:
             String newCSV = "usuario, tipo";
             for (Usuario i:listaUsuarios) {
                 newCSV += "\n" + i.getName() + ", " + i.getPrioridad();
-            }   writer = new BufferedWriter(new FileWriter(currentFile));
+            }
+            if (currentFile == null) {
+                JFileChooser dirChooser = new JFileChooser();
+                dirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                
+                int r = dirChooser.showOpenDialog(null);
+                if (r == JFileChooser.APPROVE_OPTION) {
+                    System.out.println(dirChooser.getSelectedFile().getName());
+                    currentFile = dirChooser.getSelectedFile();
+                    if (!currentFile.getName().toLowerCase().endsWith(".csv")) {
+                        currentFile = new File(currentFile.getParentFile(), currentFile.getName() + ".csv");
+                    }
+                }
+            }
+            
+            writer = new BufferedWriter(new FileWriter(currentFile));
             writer.write(newCSV);
             writer.close();
+            
         } catch (IOException ex) {
             Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
@@ -348,9 +400,9 @@ public class GUI extends javax.swing.JFrame {
             Usuario eliminado = listaUsuarios.getElmenetAtIndex(eliminar);
             listaUsuarios.deleteAtIndex(eliminar);
             setUserOptions();
-            System.out.println("Se ha eliminado al usuario " + eliminado.getName());
+            addUserLabel.setText("Usuario " + eliminado.getName() + " eliminado");
         } else {
-            System.out.println("No se ha elegido a un usuario");
+            addUserLabel.setText("No se ha elegido a un usuario");
         }
     }//GEN-LAST:event_eliminarUsuarioActionPerformed
 
@@ -366,8 +418,6 @@ public class GUI extends javax.swing.JFrame {
                 addUserLabel.setText("Usuario inválido");
                 return;
             }
-            System.out.println(nombreUsuario.getText() + " " + tiposPrioridad.getSelection().getActionCommand());
-            System.out.println(nombreUsuario.getText().contains(" "));
             listaUsuarios.insertFinal(new Usuario(nombreUsuario.getText(), tiposPrioridad.getSelection().getActionCommand()));
             agregarUsuarioVisible(false, "Usuario " + nombreUsuario.getText() + " agregado");
             setUserOptions();
@@ -385,6 +435,7 @@ public class GUI extends javax.swing.JFrame {
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
          */
+        System.setProperty("org.graphstream.ui", "swing");
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -416,6 +467,7 @@ public class GUI extends javax.swing.JFrame {
                 app.setDefaultCloseOperation(GUI.EXIT_ON_CLOSE);
                 app.setVisible(true);
                 app.setLocationRelativeTo(null);
+                
 //                GraphicsEnvironment graphics = GraphicsEnvironment.getLocalGraphicsEnvironment();
 //                GraphicsDevice device = graphics.getDefaultScreenDevice();
 //                device.setFullScreenWindow(app);
@@ -424,7 +476,30 @@ public class GUI extends javax.swing.JFrame {
     }
     
     public void graficarCola() {
+        monticulo.clear();
+        ListaArray<BHNode<Documento>> heap = colaImpresion.getHeap();
+        for (int i = 0; i < heap.getSize(); i++) {
+            Documento doc = heap.getElmenetAtIndex(0).getElement();
+            if (monticulo.getNode(doc.getName()) == null) {
+                monticulo.addNode(doc.getName());
+            }
+            Node actual = monticulo.getNode(doc.getName());
+            actual.setAttribute("ui.label", doc.getName()+"."+doc.getType()+"\n"+doc.getSize()+"hojas");
+            if (colaImpresion.leftChild(i) < colaImpresion.getSize()) {
+                Documento leftSon = heap.getElmenetAtIndex(colaImpresion.leftChild(i)).getElement();
+                monticulo.addEdge(doc.getName()+leftSon.getName(), doc.getName(), leftSon.getName());
+            }
+            if (colaImpresion.rightChild(i) < colaImpresion.getSize()) {
+                Documento rightSon = heap.getElmenetAtIndex(colaImpresion.rightChild(i)).getElement();
+                monticulo.addEdge(doc.getName()+rightSon.getName(), doc.getName(), rightSon.getName());
+            }
+        }
         
+        Viewer viewer = new SwingViewer(monticulo, Viewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD);
+        View view = viewer.addDefaultView(false);
+        view.openInAFrame(false);
+        graphDisplay.setLayout(new BorderLayout());
+        graphDisplay.add((Component)view);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -432,7 +507,9 @@ public class GUI extends javax.swing.JFrame {
     private java.awt.Button agregarUsuario;
     private java.awt.Button archivoUsuarios;
     private java.awt.Button cancelarAgregar;
+    private javax.swing.JPanel colaDisplay;
     private java.awt.Button confirmarAgregar;
+    private javax.swing.JTabbedPane displaysPane;
     private java.awt.Choice elegirUsuario;
     private java.awt.Button eliminarUsuario;
     private javax.swing.JPanel graphDisplay;
@@ -444,5 +521,6 @@ public class GUI extends javax.swing.JFrame {
     private java.awt.Button signIn;
     private javax.swing.ButtonGroup tiposPrioridad;
     private javax.swing.JPanel userSelection;
+    private javax.swing.JPanel usersDisplay;
     // End of variables declaration//GEN-END:variables
 }
