@@ -7,6 +7,7 @@ import Estructuras.*;
 import Nodos.*;
 import ProyectObj.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -22,10 +23,17 @@ import org.graphstream.ui.view.*;
 import java.time.Clock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.imageio.ImageIO;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import java.awt.FlowLayout;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import javax.swing.ImageIcon;
+import javax.swing.tree.DefaultTreeCellRenderer;
 /**
  *
  * @author usuario
@@ -35,6 +43,7 @@ public class GUI extends javax.swing.JFrame {
     
     private Clock timer;
     private BinaryHeap<Documento> colaImpresion;
+    private HashMap<String, BHNode<Documento>> mapaCola;
     private Lista<Usuario> listaUsuarios;
     private Graph monticulo;
     private File currentFile;
@@ -46,11 +55,18 @@ public class GUI extends javax.swing.JFrame {
      */
     public GUI() {
         timer = Clock.systemDefaultZone();
+        initComponents();
         currentFile = null;
         monticulo = new SingleGraph("Monticulo", false, true);
         colaImpresion = new BinaryHeap(20);
         listaUsuarios = new Lista();
-        initComponents();
+        mapaCola = new HashMap(10);
+        Viewer viewer = new SwingViewer(monticulo, Viewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD);
+        viewer.enableAutoLayout();
+        View view = viewer.addDefaultView(false);
+        view.openInAFrame(false);
+        graphDisplay.setLayout(new BorderLayout());
+        graphDisplay.add((Component)view);
         usersTree.setRootVisible(false);
         sistemaPrincipal.setVisible(false);
         userSelection.setVisible(true);
@@ -60,12 +76,34 @@ public class GUI extends javax.swing.JFrame {
         prioridadAltaButton.setActionCommand("prioridad_alta");
         prioridadMediaButton.setActionCommand("prioridad_media");
         prioridadBajaButton.setActionCommand("prioridad_baja");
+        escribirCola();
     }
 
     private void setUserOptions() {
         elegirUsuario.removeAll();
         for (int i=0; i < listaUsuarios.getLength(); i++) {
             elegirUsuario.insert(listaUsuarios.getElmenetAtIndex(i).getName(), i);
+        }
+    }
+    
+    private void setDeletePrintDocOptions() {
+        deleteDocChoice.removeAll();
+        printChoice.removeAll();
+        for (int i=0; i < currentUser.getDocumentos().getLength(); i++) {
+            deleteDocChoice.insert(currentUser.getDocumentos().getElmenetAtIndex(i).getName()+"."+currentUser.getDocumentos().getElmenetAtIndex(i).getType(), i);
+            printChoice.insert(currentUser.getDocumentos().getElmenetAtIndex(i).getName()+"."+currentUser.getDocumentos().getElmenetAtIndex(i).getType(), i);
+        }
+    }
+
+    private void setDeleteFromHeapOptions() {
+        deleteFromHeapChoice.removeAll();
+        Lista<BHNode<Documento>> inHeap = mapaCola.getValuesOfKey(currentUser.getName());
+        if (inHeap == null) {
+            return;
+        }
+        for (int i = 0; i < inHeap.getLength(); i++) {
+            Documento item = inHeap.getElmenetAtIndex(i).getElement();
+            deleteFromHeapChoice.insert(item.getName()+"."+item.getType(), i);
         }
     }
     
@@ -85,18 +123,25 @@ public class GUI extends javax.swing.JFrame {
     private void setUserDisplay() {
 //        usersDisplay.removeAll();
         modelo = (DefaultTreeModel) usersTree.getModel();
-        root = (DefaultMutableTreeNode) modelo.getRoot();
-        root.removeAllChildren();
+        DefaultMutableTreeNode raiz = (DefaultMutableTreeNode) modelo.getRoot();
+        raiz.removeAllChildren();
         
-        root.removeAllChildren();
         for (Usuario u:listaUsuarios) {
             DefaultMutableTreeNode usuario = new DefaultMutableTreeNode(u.getName());
-            root.add(usuario);
+            raiz.add(usuario);
             for (Documento d: u.getDocumentos()) {
                 DefaultMutableTreeNode doc = new DefaultMutableTreeNode(d.getName());
                 usuario.add(doc);
                 doc.add(new DefaultMutableTreeNode(d.getType()));
-                doc.add(new DefaultMutableTreeNode(d.getSize() + "páginas"));
+                doc.add(new DefaultMutableTreeNode(d.getSize() + " páginas"));
+                Lista<BHNode<Documento>> inHeap = mapaCola.getValuesOfKey(currentUser.getName());
+                if (inHeap != null) {
+                    for (int i = 0; i < inHeap.getLength(); i++) {
+                        if (inHeap.getElmenetAtIndex(i).getElement().equals(d)) {
+                            doc.add(new DefaultMutableTreeNode("Imprimiendo"));
+                        }
+                    }
+                }
             }
         }
         modelo.reload();
@@ -114,10 +159,13 @@ public class GUI extends javax.swing.JFrame {
         tiposPrioridad = new javax.swing.ButtonGroup();
         textArea1 = new java.awt.TextArea();
         displaysPane = new javax.swing.JTabbedPane();
-        treePanel = new javax.swing.JScrollPane();
+        treeDisplay = new javax.swing.JSplitPane();
+        usersTreeLeyend = new javax.swing.JPanel();
+        usersTreePane = new javax.swing.JScrollPane();
         usersTree = new javax.swing.JTree();
         graphDisplay = new javax.swing.JPanel();
         colaDisplay = new javax.swing.JPanel();
+        colaImpresoraLabel = new java.awt.TextArea();
         panelFondo = new javax.swing.JPanel();
         userSelection = new javax.swing.JPanel();
         elegirUsuario = new java.awt.Choice();
@@ -139,30 +187,51 @@ public class GUI extends javax.swing.JFrame {
         deleteFromHeap = new java.awt.Button();
         deleteDoc = new java.awt.Button();
         printChoice = new java.awt.Choice();
-        button1 = new java.awt.Button();
-        choice2 = new java.awt.Choice();
+        sendToPrint = new java.awt.Button();
+        deleteFromHeapChoice = new java.awt.Choice();
         printMin = new java.awt.Button();
-        checkbox1 = new java.awt.Checkbox();
-        textField1 = new java.awt.TextField();
-        textField2 = new java.awt.TextField();
-        textField3 = new java.awt.TextField();
-        button2 = new java.awt.Button();
-        printChoice1 = new java.awt.Choice();
-        label1 = new java.awt.Label();
+        isPrioritario = new java.awt.Checkbox();
+        newDocName = new java.awt.TextField();
+        newDocType = new java.awt.TextField();
+        newDocSize = new java.awt.TextField();
+        addDocument = new java.awt.Button();
+        deleteDocChoice = new java.awt.Choice();
+        addDocNameLabel = new java.awt.Label();
+        selectedUserLabel = new java.awt.Label();
+        addDocTypeLabel = new java.awt.Label();
+        addDocSizeLabel = new java.awt.Label();
+        systemMessage = new java.awt.Label();
+        cancelAddDocument = new java.awt.Button();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setPreferredSize(new java.awt.Dimension(800, 425));
 
-        javax.swing.tree.DefaultMutableTreeNode treeNode1 = new javax.swing.tree.DefaultMutableTreeNode("Usuarios");
+        javax.swing.GroupLayout usersTreeLeyendLayout = new javax.swing.GroupLayout(usersTreeLeyend);
+        usersTreeLeyend.setLayout(usersTreeLeyendLayout);
+        usersTreeLeyendLayout.setHorizontalGroup(
+            usersTreeLeyendLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 100, Short.MAX_VALUE)
+        );
+        usersTreeLeyendLayout.setVerticalGroup(
+            usersTreeLeyendLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 388, Short.MAX_VALUE)
+        );
+
+        treeDisplay.setLeftComponent(usersTreeLeyend);
+
+        javax.swing.tree.DefaultMutableTreeNode treeNode1 = new javax.swing.tree.DefaultMutableTreeNode("Users");
         usersTree.setModel(new javax.swing.tree.DefaultTreeModel(treeNode1));
-        treePanel.setViewportView(usersTree);
+        usersTreePane.setViewportView(usersTree);
 
-        displaysPane.addTab("Usuarios y Documentos", treePanel);
+        treeDisplay.setRightComponent(usersTreePane);
+
+        displaysPane.addTab("Usuarios y Documentos", treeDisplay);
 
         javax.swing.GroupLayout graphDisplayLayout = new javax.swing.GroupLayout(graphDisplay);
         graphDisplay.setLayout(graphDisplayLayout);
         graphDisplayLayout.setHorizontalGroup(
             graphDisplayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 451, Short.MAX_VALUE)
+            .addGap(0, 452, Short.MAX_VALUE)
         );
         graphDisplayLayout.setVerticalGroup(
             graphDisplayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -171,15 +240,17 @@ public class GUI extends javax.swing.JFrame {
 
         displaysPane.addTab("Montículo Binario", graphDisplay);
 
+        colaImpresoraLabel.setEditable(false);
+
         javax.swing.GroupLayout colaDisplayLayout = new javax.swing.GroupLayout(colaDisplay);
         colaDisplay.setLayout(colaDisplayLayout);
         colaDisplayLayout.setHorizontalGroup(
             colaDisplayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 451, Short.MAX_VALUE)
+            .addComponent(colaImpresoraLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 452, Short.MAX_VALUE)
         );
         colaDisplayLayout.setVerticalGroup(
             colaDisplayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 388, Short.MAX_VALUE)
+            .addComponent(colaImpresoraLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 388, Short.MAX_VALUE)
         );
 
         displaysPane.addTab("Cola Impresora", colaDisplay);
@@ -266,32 +337,34 @@ public class GUI extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, userSelectionLayout.createSequentialGroup()
                 .addContainerGap(20, Short.MAX_VALUE)
                 .addGroup(userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, userSelectionLayout.createSequentialGroup()
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addGroup(userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(userSelectionLayout.createSequentialGroup()
-                                .addGap(109, 109, 109)
-                                .addComponent(signIn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(userSelectionLayout.createSequentialGroup()
-                                .addGroup(userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(nombreUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 169, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(SelectionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 169, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(addUserLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 136, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(25, 25, 25)
-                                .addGroup(userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(prioridadMediaButton)
-                                    .addComponent(prioridadBajaButton)
-                                    .addComponent(prioridadAltaButton)))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, userSelectionLayout.createSequentialGroup()
+                                .addComponent(confirmarAgregar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(71, 71, 71)
+                                .addComponent(cancelarAgregar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(72, 72, 72))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, userSelectionLayout.createSequentialGroup()
+                                .addComponent(elegirUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 169, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(eliminarUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(34, 34, 34)))
+                        .addGroup(userSelectionLayout.createSequentialGroup()
                             .addGroup(userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, userSelectionLayout.createSequentialGroup()
-                                    .addComponent(confirmarAgregar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGap(71, 71, 71)
-                                    .addComponent(cancelarAgregar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGap(47, 47, 47))
-                                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, userSelectionLayout.createSequentialGroup()
-                                    .addComponent(elegirUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 169, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGap(25, 25, 25)
-                                    .addComponent(eliminarUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addGap(22, 22, 22))
+                                .addGroup(userSelectionLayout.createSequentialGroup()
+                                    .addGap(109, 109, 109)
+                                    .addComponent(signIn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGroup(userSelectionLayout.createSequentialGroup()
+                                    .addGroup(userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(nombreUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 169, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(SelectionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 169, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(addUserLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 136, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addGroup(userSelectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(prioridadMediaButton)
+                                        .addComponent(prioridadBajaButton)
+                                        .addComponent(prioridadAltaButton))))
+                            .addGap(34, 34, 34)))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, userSelectionLayout.createSequentialGroup()
                         .addComponent(agregarUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(117, 117, 117))))
@@ -343,105 +416,162 @@ public class GUI extends javax.swing.JFrame {
         });
 
         deleteFromHeap.setLabel("Elimiar documento de la cola");
+        deleteFromHeap.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteFromHeapActionPerformed(evt);
+            }
+        });
 
         deleteDoc.setLabel("Eliminar Documento");
+        deleteDoc.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteDocActionPerformed(evt);
+            }
+        });
 
-        button1.setLabel("button1");
+        sendToPrint.setLabel("Imprimir");
+        sendToPrint.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                sendToPrintActionPerformed(evt);
+            }
+        });
 
         printMin.setLabel("Liberar Impresora");
+        printMin.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                printMinActionPerformed(evt);
+            }
+        });
 
-        checkbox1.setLabel("Prioritario");
+        isPrioritario.setLabel("Prioritario");
 
-        textField1.setText("textField1");
+        addDocument.setLabel("Crear Documento");
+        addDocument.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addDocumentActionPerformed(evt);
+            }
+        });
 
-        textField2.setText("textField2");
+        addDocNameLabel.setText("Nombre");
 
-        textField3.setText("textField3");
+        selectedUserLabel.setAlignment(java.awt.Label.CENTER);
 
-        button2.setLabel("button2");
+        addDocTypeLabel.setText("Tipo");
 
-        label1.setText("label1");
+        addDocSizeLabel.setText("Páginas");
+
+        cancelAddDocument.setLabel("Cancelar");
+        cancelAddDocument.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cancelAddDocumentActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout sistemaPrincipalLayout = new javax.swing.GroupLayout(sistemaPrincipal);
         sistemaPrincipal.setLayout(sistemaPrincipalLayout);
         sistemaPrincipalLayout.setHorizontalGroup(
             sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(sistemaPrincipalLayout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(sistemaPrincipalLayout.createSequentialGroup()
-                            .addGap(50, 50, 50)
-                            .addComponent(printChoice1, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGap(144, 144, 144)
-                            .addComponent(button1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGroup(sistemaPrincipalLayout.createSequentialGroup()
-                            .addContainerGap()
-                            .addGroup(sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                .addComponent(textField2, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGroup(sistemaPrincipalLayout.createSequentialGroup()
-                                    .addComponent(label1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(textField1, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addComponent(textField3, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGap(76, 76, 76)
-                            .addComponent(button2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGroup(sistemaPrincipalLayout.createSequentialGroup()
-                            .addGap(32, 32, 32)
-                            .addComponent(printMin, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(sistemaPrincipalLayout.createSequentialGroup()
-                        .addGap(127, 127, 127)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, sistemaPrincipalLayout.createSequentialGroup()
+                        .addGroup(sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(addDocNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(addDocTypeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(addDocSizeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(newDocSize, javax.swing.GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE)
+                            .addComponent(newDocType, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(newDocName, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(21, 21, 21)
                         .addGroup(sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(deleteFromHeap, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(addDocument, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(sistemaPrincipalLayout.createSequentialGroup()
-                                .addGap(21, 21, 21)
-                                .addComponent(signOut, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                .addGap(24, 24, 24)
+                                .addComponent(cancelAddDocument, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(71, 71, 71))
                     .addGroup(sistemaPrincipalLayout.createSequentialGroup()
-                        .addGap(101, 101, 101)
-                        .addComponent(choice2, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(sistemaPrincipalLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(printChoice, javax.swing.GroupLayout.PREFERRED_SIZE, 138, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGap(18, 18, 18)
                         .addGroup(sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(checkbox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(deleteDoc, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addGap(46, 46, 46))
+                            .addComponent(systemMessage, javax.swing.GroupLayout.PREFERRED_SIZE, 274, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(deleteDocChoice, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+            .addGroup(sistemaPrincipalLayout.createSequentialGroup()
+                .addGroup(sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(sistemaPrincipalLayout.createSequentialGroup()
+                        .addGap(28, 28, 28)
+                        .addGroup(sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(deleteDoc, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(sistemaPrincipalLayout.createSequentialGroup()
+                                .addComponent(printChoice, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(isPrioritario, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(sendToPrint, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                    .addGroup(sistemaPrincipalLayout.createSequentialGroup()
+                        .addGap(117, 117, 117)
+                        .addComponent(printMin, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(54, Short.MAX_VALUE))
+            .addGroup(sistemaPrincipalLayout.createSequentialGroup()
+                .addGroup(sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(sistemaPrincipalLayout.createSequentialGroup()
+                        .addGap(124, 124, 124)
+                        .addComponent(signOut, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(sistemaPrincipalLayout.createSequentialGroup()
+                        .addGap(81, 81, 81)
+                        .addGroup(sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(deleteFromHeapChoice, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(deleteFromHeap, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(selectedUserLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 338, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         sistemaPrincipalLayout.setVerticalGroup(
             sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, sistemaPrincipalLayout.createSequentialGroup()
-                .addGap(21, 21, 21)
+                .addContainerGap()
+                .addComponent(selectedUserLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(printMin, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGroup(sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(sistemaPrincipalLayout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(button2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(62, 62, 62))
+                        .addGroup(sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(sistemaPrincipalLayout.createSequentialGroup()
+                                .addGroup(sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(newDocName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(addDocNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(14, 14, 14)
+                                .addGroup(sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(newDocType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(addDocTypeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(14, 14, 14)
+                                .addComponent(newDocSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(addDocSizeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addGroup(sistemaPrincipalLayout.createSequentialGroup()
-                        .addGap(43, 43, 43)
-                        .addGroup(sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(textField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(label1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(23, 23, 23)
+                        .addComponent(addDocument, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(textField2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(textField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 45, Short.MAX_VALUE)))
-                .addGroup(sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(button1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(checkbox1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(printChoice1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(28, 28, 28)
-                .addGroup(sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(deleteDoc, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(printChoice, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(cancelAddDocument, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addGap(23, 23, 23)
-                .addComponent(choice2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(systemMessage, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(deleteDoc, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(deleteDocChoice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(sistemaPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(sendToPrint, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(isPrioritario, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(printChoice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(deleteFromHeapChoice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(deleteFromHeap, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(signOut, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(19, 19, 19))
+                .addGap(59, 59, 59))
         );
 
         panelFondo.add(sistemaPrincipal, "card3");
@@ -469,6 +599,7 @@ public class GUI extends javax.swing.JFrame {
         displaysPane.getAccessibleContext().setAccessibleName("tab1");
 
         pack();
+        setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
     private void archivoUsuariosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_archivoUsuariosActionPerformed
@@ -514,7 +645,11 @@ public class GUI extends javax.swing.JFrame {
         currentUser = listaUsuarios.getElmenetAtIndex(elegirUsuario.getSelectedIndex());
         userSelection.setVisible(false);
         sistemaPrincipal.setVisible(true);
-        graficarCola();
+        selectedUserLabel.setText("Inició sesión como " + currentUser.getName());
+        newDocName.setText("");
+        newDocType.setText("");
+        newDocSize.setText("");
+        systemMessage.setText("");
     }//GEN-LAST:event_signInActionPerformed
 
     private void guardarUsariosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_guardarUsariosActionPerformed
@@ -598,6 +733,110 @@ public class GUI extends javax.swing.JFrame {
         userSelection.setVisible(true);
     }//GEN-LAST:event_signOutActionPerformed
 
+    private void sendToPrintActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendToPrintActionPerformed
+        // TODO add your handling code here:
+        int imprimir = printChoice.getSelectedIndex();
+        if (imprimir != -1) {
+            int prioridad = (int) timer.millis();
+            if (isPrioritario.getState()) {
+                if (currentUser.getPrioridad() == "prioridad_alta") {
+                    prioridad -= 10000;
+                } else if (currentUser.getPrioridad() == "prioridad_media") {
+                    prioridad -= 5000;
+                } else if (currentUser.getPrioridad() == "prioridad_baja") {
+                    prioridad -= 1000;
+                }
+            }
+            BHNode<Documento> nodo = new BHNode(currentUser.getDocumentos().getElmenetAtIndex(printChoice.getSelectedIndex()), prioridad);
+            colaImpresion.insert(currentUser.getDocumentos().getElmenetAtIndex(printChoice.getSelectedIndex()), prioridad);
+            mapaCola.put(currentUser.getName(), nodo);
+            setDeleteFromHeapOptions();
+            setUserDisplay();
+            graficarCola();
+            escribirCola();
+        } else {
+            systemMessage.setText("Este usuario no tiene documentos");
+        }
+    }//GEN-LAST:event_sendToPrintActionPerformed
+
+    private void printMinActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_printMinActionPerformed
+        // TODO add your handling code here:
+        Documento extraido = colaImpresion.extractMin();
+        if (extraido == null) {
+            systemMessage.setText("La cola de impresión está vacía");
+            return;
+        }
+        systemMessage.setText("Se imprimió el documento " + colaImpresion.extractMin().getName());
+        graficarCola();
+        escribirCola();
+        setUserDisplay();
+    }//GEN-LAST:event_printMinActionPerformed
+
+    private void addDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addDocumentActionPerformed
+        // TODO add your handling code here:
+        if (!newDocName.getText().isBlank() && !newDocType.getText().isBlank() && !newDocSize.getText().isBlank()) {
+            Integer size;
+            try {
+                size = Integer.valueOf(newDocSize.getText());
+            } catch (NumberFormatException e) {
+                systemMessage.setText("El campo 'Páginas' tiene que contener números");
+                return;
+            }
+            currentUser.addDocument(newDocName.getText(), newDocType.getText(), size);
+            setUserDisplay();
+            setDeletePrintDocOptions();
+            newDocName.setText("");
+            newDocType.setText("");
+            newDocSize.setText("");
+            systemMessage.setText("Documento " + newDocName.getText() + "añadido");
+        } else {
+            systemMessage.setText("Rellene todos los campos");
+        }
+    }//GEN-LAST:event_addDocumentActionPerformed
+
+    private void cancelAddDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelAddDocumentActionPerformed
+        // TODO add your handling code here:
+        newDocName.setText("");
+        newDocType.setText("");
+        newDocSize.setText("");
+        systemMessage.setText("Operación Cancelada");
+    }//GEN-LAST:event_cancelAddDocumentActionPerformed
+
+    private void deleteDocActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteDocActionPerformed
+        // TODO add your handling code here:
+        int eliminar = deleteDocChoice.getSelectedIndex();
+        if (eliminar != -1) {
+            Documento eliminado = currentUser.getDocumentos().getElmenetAtIndex(eliminar);
+            currentUser.getDocumentos().deleteAtIndex(eliminar);
+            setDeletePrintDocOptions();
+            setUserDisplay();
+            systemMessage.setText("Se ha eliminado el documento "+eliminado.getName()+"."+eliminado.getType());
+        } else {
+            systemMessage.setText("Este usuario no tiene documentos");
+        }
+    }//GEN-LAST:event_deleteDocActionPerformed
+
+    private void deleteFromHeapActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteFromHeapActionPerformed
+        // TODO add your handling code here:
+        int eliminar = deleteFromHeapChoice.getSelectedIndex();
+        if (eliminar != -1) {
+            BHNode extraer = mapaCola.getValuesOfKey(currentUser.getName()).getElmenetAtIndex(eliminar);
+            Documento extraido = colaImpresion.extractElement(extraer);
+            if (extraido == null) {
+                systemMessage.setText("Este archivo no se encuentra en la cola");
+            } else {
+                systemMessage.setText("Se ha eliminado "+extraido.getName()+"."+extraido.getType()+" de la cola");
+                setUserDisplay();
+                graficarCola();
+                escribirCola();
+                setDeleteFromHeapOptions();
+            }
+        } else {
+            systemMessage.setText("Este usuario no tiene documentos en la cola");
+        }
+        
+    }//GEN-LAST:event_deleteFromHeapActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -649,6 +888,7 @@ public class GUI extends javax.swing.JFrame {
     
     public void graficarCola() {
         monticulo.clear();
+        
         ListaArray<BHNode<Documento>> heap = colaImpresion.getHeap();
         for (int i = 0; i < heap.getSize(); i++) {
             Documento doc = heap.getElmenetAtIndex(0).getElement();
@@ -656,7 +896,7 @@ public class GUI extends javax.swing.JFrame {
                 monticulo.addNode(doc.getName());
             }
             Node actual = monticulo.getNode(doc.getName());
-            actual.setAttribute("ui.label", doc.getName()+"."+doc.getType()+"\n"+doc.getSize()+"hojas");
+            actual.setAttribute("ui.label", doc.getName());
             if (colaImpresion.leftChild(i) < colaImpresion.getSize()) {
                 Documento leftSon = heap.getElmenetAtIndex(colaImpresion.leftChild(i)).getElement();
                 monticulo.addEdge(doc.getName()+leftSon.getName(), doc.getName(), leftSon.getName());
@@ -666,52 +906,69 @@ public class GUI extends javax.swing.JFrame {
                 monticulo.addEdge(doc.getName()+rightSon.getName(), doc.getName(), rightSon.getName());
             }
         }
-        
-        Viewer viewer = new SwingViewer(monticulo, Viewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD);
-        View view = viewer.addDefaultView(false);
-        view.openInAFrame(false);
-        graphDisplay.setLayout(new BorderLayout());
-        graphDisplay.add((Component)view);
+    }
+    
+    public void escribirCola() {
+        ListaArray<BHNode<Documento>> cola = colaImpresion.getHeap();
+        String colaText = "";
+        if (cola.getSize() == 0) {
+            colaImpresoraLabel.setText("La cola de impresión se encuentra vacía");
+            return;
+        }
+        for (int i = 0; i < cola.getSize(); i++) {
+            colaText += i+1+". ";
+            colaText += cola.getElmenetAtIndex(i).getElement().getName()+"."+cola.getElmenetAtIndex(i).getElement().getType();
+            colaText += " - "+cola.getElmenetAtIndex(i).getElement().getSize()+"hojas\n";
+        }
+        colaImpresoraLabel.setText(colaText);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private java.awt.Label SelectionLabel;
+    private java.awt.Label addDocNameLabel;
+    private java.awt.Label addDocSizeLabel;
+    private java.awt.Label addDocTypeLabel;
+    private java.awt.Button addDocument;
     private java.awt.Label addUserLabel;
     private java.awt.Button agregarUsuario;
     private java.awt.Button archivoUsuarios;
-    private java.awt.Button button1;
-    private java.awt.Button button2;
+    private java.awt.Button cancelAddDocument;
     private java.awt.Button cancelarAgregar;
-    private java.awt.Checkbox checkbox1;
-    private java.awt.Choice choice2;
     private javax.swing.JPanel colaDisplay;
+    private java.awt.TextArea colaImpresoraLabel;
     private java.awt.Button confirmarAgregar;
     private java.awt.Button deleteDoc;
+    private java.awt.Choice deleteDocChoice;
     private java.awt.Button deleteFromHeap;
+    private java.awt.Choice deleteFromHeapChoice;
     private javax.swing.JTabbedPane displaysPane;
     private java.awt.Choice elegirUsuario;
     private java.awt.Button eliminarUsuario;
     private javax.swing.JPanel graphDisplay;
     private java.awt.Button guardarUsarios;
-    private java.awt.Label label1;
+    private java.awt.Checkbox isPrioritario;
+    private java.awt.TextField newDocName;
+    private java.awt.TextField newDocSize;
+    private java.awt.TextField newDocType;
     private java.awt.TextField nombreUsuario;
     private javax.swing.JPanel panelFondo;
     private java.awt.Choice printChoice;
-    private java.awt.Choice printChoice1;
     private java.awt.Button printMin;
     private javax.swing.JRadioButton prioridadAltaButton;
     private javax.swing.JRadioButton prioridadBajaButton;
     private javax.swing.JRadioButton prioridadMediaButton;
+    private java.awt.Label selectedUserLabel;
+    private java.awt.Button sendToPrint;
     private java.awt.Button signIn;
     private java.awt.Button signOut;
     private javax.swing.JPanel sistemaPrincipal;
+    private java.awt.Label systemMessage;
     private java.awt.TextArea textArea1;
-    private java.awt.TextField textField1;
-    private java.awt.TextField textField2;
-    private java.awt.TextField textField3;
     private javax.swing.ButtonGroup tiposPrioridad;
-    private javax.swing.JScrollPane treePanel;
+    private javax.swing.JSplitPane treeDisplay;
     private javax.swing.JPanel userSelection;
     private javax.swing.JTree usersTree;
+    private javax.swing.JPanel usersTreeLeyend;
+    private javax.swing.JScrollPane usersTreePane;
     // End of variables declaration//GEN-END:variables
 }

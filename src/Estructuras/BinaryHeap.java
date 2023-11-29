@@ -45,6 +45,15 @@ public class BinaryHeap<T> {
         return getHeap().getElmenetAtIndex(0);
     }
     
+    public boolean containsElement(T element) {
+        for (int i = 0; i < getSize(); i++) {
+            if (getHeap().getElmenetAtIndex(i).getElement() == element) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     public boolean isEmpty() {
         if (getSize() == 0) {
             return true;
@@ -127,12 +136,12 @@ public class BinaryHeap<T> {
         }
     }
     
-    public BHNode extractMin() {
+    public T extractMin() {
         if (isEmpty()) {
             System.out.println("El montículo está vacío");
             return null;
         }
-        BHNode min = getHeap().getElmenetAtIndex(0);
+        BHNode<T> min = getHeap().getElmenetAtIndex(0);
         getHeap().deleteBegin();
         size--;
         if (size != 0) {
@@ -140,10 +149,10 @@ public class BinaryHeap<T> {
             getHeap().deleteFinal();
             minHeapify(0);
         }
-        return min;
+        return min.getElement();
     }
     
-    public BHNode extractElement(BHNode extract) {
+    public T extractElement(BHNode extract) {
         if (isEmpty()) {
             System.out.println("El monticulo esta vacio");
             return null;
@@ -152,7 +161,7 @@ public class BinaryHeap<T> {
         
         Lista<T> colaElementos = new Lista();
         Lista<Integer> colaPrioridades = new Lista();
-        BHNode eliminado = null;
+        T eliminado = null;
 
         while (!getHeap().getElmenetAtIndex(0).equals(extract)) {
             colaElementos.insertFinal(getHeap().getElmenetAtIndex(0).getElement());
@@ -162,7 +171,7 @@ public class BinaryHeap<T> {
         }
         if (getSize() != 0) {eliminado = extractMin();}
         
-        for (int i = 0; i < colaElementos.getLength(); i++) {
+        while (colaElementos.getLength() != 0) {
             T newElement = colaElementos.getElmenetAtIndex(0);
             int newPrioridad = colaPrioridades.getElmenetAtIndex(0);
             insert(newElement, newPrioridad);

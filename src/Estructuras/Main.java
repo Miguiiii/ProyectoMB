@@ -17,7 +17,7 @@ public class Main {
      */
     public static void main(String args[]) {
         
-        
+        System.out.println(System.getProperty("user.dir")+"\\src\\GUI");
 //        System.out.println("Hello World");
 //        Lista<Documento> lDocumentos = new Lista();
 //        Documento doc = new Documento("Tarea 1", "pdf", 4);
@@ -68,7 +68,7 @@ public class Main {
 
 
 //        BinaryHeap<Documento> colaImpresion = new BinaryHeap(20);
-//        
+//        System.out.println(colaImpresion.containsElement(new Documento("Tarea 5", "word", 7)));
 //        Documento doc = new Documento("Tarea 1", "pdf", 4);
 //        
 //        colaImpresion.insert(doc, doc.getSize());
@@ -76,19 +76,33 @@ public class Main {
 //        colaImpresion.insert(doc, doc.getSize());
 //        doc = new Documento("Tarea 3", "word", 3);
 //        colaImpresion.insert(doc, doc.getSize());
-//        
+//        System.out.println(colaImpresion.containsElement(doc));
 //        for (int i = 0; i < colaImpresion.getSize(); i++) {
 //            BHNode<Documento> a = colaImpresion.getHeap().getElmenetAtIndex(i);
 //            System.out.println(a.getElement().getName());
 //            
 //        }
+//        
+//        colaImpresion.extractMin();
+//        for (int i = 0; i < colaImpresion.getSize(); i++) {
+//            BHNode<Documento> a = colaImpresion.getHeap().getElmenetAtIndex(i);
+//            System.out.println(a.getElement().getName());
+//        }
+//        
 //        System.out.println("\n");
+//        System.out.println(colaImpresion.containsElement(new Documento("Tarea 5", "word", 7)));
 //        colaImpresion.extractElement(new BHNode(new Documento("Tarea 5", "word", 7), 4));
 //        
 //        for (int i = 0; i < colaImpresion.getSize(); i++) {
 //            BHNode<Documento> a = colaImpresion.getHeap().getElmenetAtIndex(i);
 //            System.out.println(a.getElement().getName());
 //        }
+//        colaImpresion.extractMin();
+//        for (int i = 0; i < colaImpresion.getSize(); i++) {
+//            BHNode<Documento> a = colaImpresion.getHeap().getElmenetAtIndex(i);
+//            System.out.println(a.getElement().getName());
+//        }
+
 
 //        HashMap<String, Documento> hash = new HashMap(5);
 //        Documento doc = new Documento("Tarea 1", "pdf", 4);
