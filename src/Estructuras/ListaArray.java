@@ -89,27 +89,29 @@ public class ListaArray<T> implements Iterable<T> {
                 getArray()[0] = nodo;
                 setHead(0);
                 size++;
+                return;
             }
         } else if (getSize() == getMaxSize()) {
             System.out.println("El maximo tamaño ya fue alcanzado");
-        } else {
-            int position = searchSpace();
-            if (position != -1) {
-                nodo.setNext(getHead());
-                getArray()[position] = nodo;
-                setHead(position);
-            } else {
-                NodoArray[] newArray = new NodoArray[getSize() + 1];
-                for (int i = 0; i < getSize(); i++) {
-                    newArray[i] = getArray()[i];
-                }
-                nodo.setNext(getHead());
-                setHead(newArray.length - 1);
-                newArray[newArray.length - 1] = nodo;
-                setArray(newArray);
-            }
-            size++;
+            return;
         }
+        int position = searchSpace();
+        if (position != -1) {
+            nodo.setNext(getHead());
+            getArray()[position] = nodo;
+            setHead(position);
+        } else {
+            NodoArray[] newArray = new NodoArray[getSize() + 1];
+            for (int i = 0; i < getSize(); i++) {
+                newArray[i] = getArray()[i];
+            }
+            nodo.setNext(getHead());
+            setHead(newArray.length - 1);
+            newArray[newArray.length - 1] = nodo;
+            setArray(newArray);
+        }
+        size++;
+        
     }
     
     public void insertFinal(T element) {

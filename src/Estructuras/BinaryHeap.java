@@ -45,6 +45,15 @@ public class BinaryHeap<T> {
         return getHeap().getElmenetAtIndex(0);
     }
     
+    public boolean containsElement(T element) {
+        for (int i = 0; i < getSize(); i++) {
+            if (getHeap().getElmenetAtIndex(i).getElement() == element) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     public boolean isEmpty() {
         if (getSize() == 0) {
             return true;
@@ -127,36 +136,53 @@ public class BinaryHeap<T> {
         }
     }
     
-    public BHNode extractMin() {
-        BHNode min = getHeap().getElmenetAtIndex(0);
+    public T extractMin() {
+        if (isEmpty()) {
+            System.out.println("El montículo está vacío");
+            return null;
+        }
+        BHNode<T> min = getHeap().getElmenetAtIndex(0);
         getHeap().deleteBegin();
         size--;
-        getHeap().insertBegin(getHeap().getElmenetAtIndex(size - 1));
-        getHeap().deleteFinal();
-        minHeapify(0);
-        return min;
+        if (size != 0) {
+            getHeap().insertBegin(getHeap().getElmenetAtIndex(size - 1));
+            getHeap().deleteFinal();
+            minHeapify(0);
+        }
+        return min.getElement();
     }
     
-    public BHNode extractElement(BHNode extract) {
+    public T extractElement(BHNode extract) {
+        if (isEmpty()) {
+            System.out.println("El monticulo esta vacio");
+            return null;
+        }
+        
+        
         Lista<T> colaElementos = new Lista();
         Lista<Integer> colaPrioridades = new Lista();
-        
+        T eliminado = null;
+
         while (!getHeap().getElmenetAtIndex(0).equals(extract)) {
             colaElementos.insertFinal(getHeap().getElmenetAtIndex(0).getElement());
             colaPrioridades.insertFinal(getHeap().getElmenetAtIndex(0).getPrioridad());
             extractMin();
+            if (getSize() == 0) {break;}
         }
+        if (getSize() != 0) {eliminado = extractMin();}
         
-        BHNode eliminado = extractMin();
-        
-        for (int i = 0; i < colaElementos.getLength(); i++) {
+        while (colaElementos.getLength() != 0) {
             T newElement = colaElementos.getElmenetAtIndex(0);
             int newPrioridad = colaPrioridades.getElmenetAtIndex(0);
             insert(newElement, newPrioridad);
             colaElementos.deleteBegin();
             colaPrioridades.deleteBegin();
         }
-        
+        if (eliminado == null) {
+            System.out.println("Elemento no encontrado");
+            size++;
+        }
+        size--;
         return eliminado;
     }
     
